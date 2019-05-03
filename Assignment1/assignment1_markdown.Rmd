@@ -124,45 +124,95 @@ length(unique(parcels$UseCode)) #591
 
 head(as.tibble(parcels))
 
-UseCodes$UseCode <- as.character(UseCodes$UseCode)
+
 
 # Join
 class(parcels$UseCode)
 class(UseCodes$UseCode)
 
+UseCodes$UseCode <- as.character(UseCodes$UseCode)
+
 parcels <- left_join(x = parcels, y = UseCodes, by = 'UseCode') 
 class(parcels$UseCode)  
 
-View(parcels)
-unique(parcels$UseCode)
-str(parcels)
-unique(parcels$UseCode)
+# View(parcels)
+# unique(parcels$UseCode)
+# str(parcels)
+# unique(parcels$UseCode)
 
 ## Solution ##
 parcels_2 <- parcels %>% 
-  select(UseCode, CodeDesc) %>% 
   group_by(UseCode, CodeDesc) %>% 
   tally() %>% 
+  arrange(-n) %>%
+  head(10)
+
+## alternative solution 
+parcels_3 <- parcels %>% 
+  count(UseCode, CodeDesc) %>% 
   arrange(-n) %>% 
   head(10)
 
+
+# consider renameing the tally column n 
+  
 ```
 
 #### 2. Acres for the whole agri. preserves 
  * sum the acres for only agri. preserve type land 
 
 ```{r }
+View(parcels)
+
+library(stringr)
+
+parcels_acreage <- parcels %>% 
+  filter(str_detect(CodeDesc, "Ag preserve")) 
+
+Sum_acres <- sum(as.numeric(parcels_acreage$Acreage))
+Sum_acres
 
 ```
 
 #### 3. Mean net assessed value per acre of the entire county 
 
+```{r }
+
+# Net mean assess value
+
+mean_Net_AV <- mean(as.numeric(parcels$Net_AV))
+
+```
+
 
 #### 4. what is the total net assessed value of all non-taxable parcels 
+# what are the non taxable parcels?
+
+```{r nontaxableparcels}
+
+
+```
 
 
 #### 5. 10 largest property holders, by acreage?
   --> use mailing address of tax statements as a proxy for the parcel owner
+  --> Question: do we remove NA mailing addresses ?
+  
+```{r top_prop_holders}
+
+parcels_top_acreage <- parcels %>% 
+  filter(!is.na(Mail_Address1)) %>% 
+  group_by(Mail_Address1, Mail_Address2) %>% 
+  summarise(property = sum(as.numeric(Acreage))) %>% 
+  arrange(-property) %>% 
+  head(10)
+  
+arrange(-as.numeric(Acreage)) %>% 
+  head(10)
+View(parcels_top_acreage)
+
+  
+```
   
 #### 6. 10 largest property holder, by net assessed value?
 
