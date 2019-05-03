@@ -172,6 +172,14 @@ parcels_acreage <- parcels %>%
 Sum_acres <- sum(as.numeric(parcels_acreage$Acreage))
 Sum_acres
 
+### alternative
+parcels_acreage_2 <- parcels %>% 
+  filter(!is.na(AgPres))  
+
+sum_acres <- sum(as.numeric(parcels_acreage_2$Acreage)) 
+sum_acres
+
+## note: the acreage for agpreserve is different depending on 
 ```
 
 #### 3. Mean net assessed value per acre of the entire county 
@@ -203,18 +211,27 @@ mean_Net_AV <- mean(as.numeric(parcels$Net_AV))
 parcels_top_acreage <- parcels %>% 
   filter(!is.na(Mail_Address1)) %>% 
   group_by(Mail_Address1, Mail_Address2) %>% 
-  summarise(property = sum(as.numeric(Acreage))) %>% 
-  arrange(-property) %>% 
+  summarise(property_acreage = sum(as.numeric(Acreage))) %>% 
+  arrange(-property_acreage) %>% 
   head(10)
   
-arrange(-as.numeric(Acreage)) %>% 
-  head(10)
-View(parcels_top_acreage)
-
+parcels_top_acreage
   
 ```
   
 #### 6. 10 largest property holder, by net assessed value?
 
+```{r largestpropertyholder_byNAV}
+
+parcels_top_NetAV <- parcels %>% 
+  filter(!is.na(Mail_Address1)) %>% 
+  group_by(Mail_Address1, Mail_Address2) %>% 
+  summarise(property_NetAV = sum(as.numeric(Net_AV))) %>% 
+  arrange(-property_NetAV) %>% 
+  head(10)
+
+parcels_top_NetAV
+
+```
 
 
