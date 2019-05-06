@@ -1,16 +1,17 @@
 ---
 title: "ESM232-Assignment1"
 author: "Margaux Sleckman"
-date: "April 20, 2019"
+date: "May 7, 2019"
 output: html_document
+
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+##Import and Tidy
 
-
-
+#### Libraries
 ```{r libs}
 
 library(tidyverse)
@@ -21,7 +22,7 @@ library(stringr)
 
 
 ```
-
+####1. Read the parcels data as-is
 ```{r read}
 
 #---read in file---# 
@@ -33,13 +34,17 @@ library(stringr)
 
 getwd()
 
-parcels_raw <- read_csv("Santa_Barbara_County_parcels_2011.csv", col_types =  cols(.default = col_character()))
+parcels_raw <- read_csv("Santa_Barbara_County_parcels_2011.csv", col_types = cols(.default = col_character()))
+
+parcels_raw <- read_csv("Santa_Barbara_County_parcels_2011.csv")
 
 names(parcels_raw)
+
 # View(head(parcels_raw, 50))
 
 ```
 
+####2.Copy the following columns into a tibble
 ```{r subset_check_clean}
 
 #---Parse Data ---#
@@ -57,43 +62,35 @@ parcel_select <- select(parcels_raw,
                         Mail_Address1 = M_Address1, 
                         Mail_Address2 = M_Address2)
 
-dim(parcel_select)
-str(parcel_select)
-skim(parcel_select)
+# dim(parcel_select)
+# skim(parcel_select)
+# str(parcel_select)
 
 parcels <- as_tibble(parcel_select)
-head(parcels)
-# Lets look at the data now that its 
+
+## seems clean 
+
+```
+#### Convert  
+```{r conversion_ifnecessary}
+
+## skim through the data see if any significant issues  
 
 lapply(parcels, class)
 anyNA(lapply(parcels, unique))
-
-### defined as type character : 
-# 1. City_address --> makes sense there are words
-# 2. Home_address --> makes sense there are words 
-# 3. M_Address1 --> address with words 
-# 4. M_address2 --> address with words 
-# 5. nontaxcode --> letter plus numbers 
-# 6. usecode --> letters plus numbers 
-### Defined as numeric: 
-# 6. Acreage --> number, unit ... 
-# 7. Land_Value --> number, unit $$ 
-# 8. Net_AV --> number, idk what unit 
-# 9. Net_Impr --> number, idk what unit
 
 skim(as.tibble(parcels[,11-12]))
 skim(as.tibble(parcels[,6:10]))
 skim(as.tibble(parcels[,1:5]))
 
-## seems clean 
-
 ```
 
+####write delim parcels file
 ```{r write}
 
 #write.csv of parcels df 
 
-write_csv(parcel_select, paste0(path, "/Assignment1/parcel_select.csv"))
+write_delim(parcels, "parcels.csv", delim = "|")
 
 ```
 
@@ -103,97 +100,105 @@ write_csv(parcel_select, paste0(path, "/Assignment1/parcel_select.csv"))
 ###1. 10 most-frequently-occuring land uses
 ```{r 1}
 
-# 10 most frequ.occuring land uses 
-# loadl in package
-UseCodes<-read_delim("UseCodes.csv", delim = "|", na = "No Description Available",
-                     col_types = cols_only(UseCode = "c", CodeDesc = "c")
-                     )
+## 10 most frequ.occuring land uses 
+## load in data
 
+UseCodes<-read_delim("UseCodes.csv", delim = "|", na = "No Description Available",
+                     col_types = cols_only(UseCode = "c", CodeDesc = "c"))
+
+## warning identified missing value here:
 UseCodes[1430,]
 
-#prepare for join
-View(head(UseCodes, 40))
-length(unique(UseCodes))
-length(unique(parcels_raw$UseCode))
-names(UseCodes)
-names(parcels)
-length(unique(UseCodes$CodeDesc))
-length(unique(UseCodes$UseCode)) #1430
-length(unique(parcels$UseCode)) #591
+## Prepare for join
+# View(head(UseCodes, 30))
+# length(unique(UseCodes))
+# length(unique(parcels_raw$UseCode))
+# names(UseCodes)
+# names(parcels)
+# length(unique(UseCodes$CodeDesc))
+# length(unique(UseCodes$UseCode)) #1430
+# length(unique(parcels$UseCode)) #591
 
-# there are only 591/1430 different unique usecodes used in SB county. 
+## there are only 591/1430 different unique usecodes used in SB county. 
 
-head(as.tibble(parcels))
-
-
-
-# Join
+#---Join----
 class(parcels$UseCode)
 class(UseCodes$UseCode)
+## if UseCodes$UseCode is not character, or if parcels$UseCode is not character, run the respective function.
 
-UseCodes$UseCode <- as.character(UseCodes$UseCode)
+# UseCodes$UseCode <- as.character(UseCodes$UseCode)
+# parcels$UseCode <- as.character(parcels$UseCode)
 
 parcels <- left_join(x = parcels, y = UseCodes, by = 'UseCode') 
-class(parcels$UseCode)  
 
+lapply(parcels, class)
+str(parcels)
 # View(parcels)
 # unique(parcels$UseCode)
-# str(parcels)
-# unique(parcels$UseCode)
+```
+
+```{r Solution1}
 
 ## Solution ##
-parcels_2 <- parcels %>% 
+parcels_toplanduses <- parcels %>% 
   group_by(UseCode, CodeDesc) %>% 
   tally() %>% 
   arrange(-n) %>%
   head(10)
 
+parcels_toplanduses
+
 ## alternative solution 
-parcels_3 <- parcels %>% 
+parcels_toplanduses2 <- parcels %>% 
   count(UseCode, CodeDesc) %>% 
   arrange(-n) %>% 
   head(10)
 
+colnames(parcels_toplanduses) <- c("UseCode", "CodeDesc", "Land Use Frequency")
+colnames(parcels_toplanduses2) <- c("UseCode", "CodeDesc", "Land Use Frequency")
 
-# consider renameing the tally column n 
+# View(parcels_toplanduses2)
+# View(parcels_toplanduses)
+
+## consider renameing the tally column n 
   
 ```
 
 #### 2. Acres for the whole agri. preserves 
- * sum the acres for only agri. preserve type land 
+We summed the acres for only agri. preserve type land 
+We assume agri preserve is everything non-NA in agri preserve varaible
+```{r acres_agripres}
 
-```{r }
+###Solution
+## Here we assume that everything not defined by NA by the AgriPres. variable is agri. preserve land
+parcels_acreage <- parcels %>% 
+  filter(!is.na(AgPres))  
 
+sum_acres <- sum(as.numeric(parcels_acreage$Acreage)) 
+sum_acres
+
+
+###Alternative: if we choose to define agri preserve land by the description
 parcels_acreage <- parcels %>% 
   filter(str_detect(CodeDesc, "Ag preserve")) 
 
 Sum_acres <- sum(as.numeric(parcels_acreage$Acreage))
 Sum_acres
 
-### alternative
-parcels_acreage_2 <- parcels %>% 
-  filter(!is.na(AgPres))  
+## note: the acreage is larger if we use code description or agripreserver variable as defining element for agri preserve land. 
 
-sum_acres <- sum(as.numeric(parcels_acreage_2$Acreage)) 
-sum_acres
-
-## note: the acreage for agpreserve is different depending on 
 ```
 
 #### 3. Mean net assessed value per acre of the entire county 
-
-```{r }
+```{r mean_net_AV}
 
 # Net mean assess value
-
 mean_Net_AV <- mean(as.numeric(parcels$Net_AV))
-
+mean_Net_AV
 ```
 
-
 #### 4. what is the total net assessed value of all non-taxable parcels 
-Assume non-taxable parcels are indicated by non-NA values for NonTaxCode
-
+We assume non-taxable parcels are indicated by non-NA values for NonTaxCode
 ```{r nontaxableparcels}
 
 parcels_nontaxable <- parcels %>% 
@@ -201,13 +206,12 @@ parcels_nontaxable <- parcels %>%
  
 total_NetAV_nontaxable <-sum(as.numeric(parcels_nontaxable$Net_AV))
 total_NetAV_nontaxable
-```
 
+```
 
 #### 5. 10 largest property holders, by acreage?
   --> use mailing address of tax statements as a proxy for the parcel owner
   --> Question: do we remove NA mailing addresses ?
-  
 ```{r top_prop_holders}
 
 parcels_top_acreage <- parcels %>% 
@@ -218,7 +222,8 @@ parcels_top_acreage <- parcels %>%
   head(10)
   
 parcels_top_acreage
-  
+
+## Internestingly, the largest property owners by acreage in Santa Barbara county have a mailing address in SF.
 ```
   
 #### 6. 10 largest property holder, by net assessed value?
@@ -234,6 +239,8 @@ parcels_top_NetAV <- parcels %>%
 
 parcels_top_NetAV
 
+
+## The largest SB county property holder by net assessed value has a mailing address in Downtown SB.  
 ```
 
 
