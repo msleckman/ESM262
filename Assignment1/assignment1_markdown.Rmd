@@ -122,9 +122,12 @@ UseCodes[1430,]
 ## there are only 591/1430 different unique usecodes used in SB county. 
 
 #---Join----
+if(!class(parcels$UseCode) == "character") as.character(parcels$UseCode)
+if(!class(UseCodes$UseCode) == "character") as.character(UseCodes$UseCode)
+
 class(parcels$UseCode)
 class(UseCodes$UseCode)
-## if UseCodes$UseCode is not character, or if parcels$UseCode is not character, run the respective function.
+
 
 # UseCodes$UseCode <- as.character(UseCodes$UseCode)
 # parcels$UseCode <- as.character(parcels$UseCode)
