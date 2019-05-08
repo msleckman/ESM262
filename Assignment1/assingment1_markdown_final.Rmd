@@ -3,7 +3,6 @@ title: "ESM232-Assignment1"
 author: "Margaux Sleckman"
 date: "May 7, 2019"
 output: html_document
-
 ---
 
 ```{r setup, include=FALSE}
@@ -20,17 +19,12 @@ if(!require(readr)) install.packages("readr")
 if(!require(skimr)) install.packages("skimr")
 library(stringr)
 
-
 ```
+
 ####1. Read the parcels data as-is
 ```{r read}
 
 #---read in file---# 
-
-# parcels <- read_csv("Assignment1/Santa_Barbara_County_parcels_2011.csv")
-# View(head(parcels, 50))
-
-# path <- "C:/github/ESM262/ESM262/"
 
 getwd()
 
@@ -38,14 +32,13 @@ parcels_raw <- read_delim("Santa_Barbara_County_parcels_2011.csv", col_types = c
 
 # parcels_raw <- read_csv("Santa_Barbara_County_parcels_2011.csv")
 
-names(parcels_raw)
-
 # View(head(parcels_raw, 50))
+# names(parcels_raw)
 
 ```
 
-####2.Copy the following columns into a tibble
-```{r subset_check_clean}
+####2.Copy the following columns into a tibble and convert
+```{r subset_check_clean_Convert}
 
 #---Parse Data ---#
 parcel_select <- transmute(parcels_raw, 
@@ -53,7 +46,7 @@ parcel_select <- transmute(parcels_raw,
                         Home_address1 = Situs1,
                         Home_adress2 = Situs2, 
                         Acreage = parse_double(Acreage),
-                        UseCode = UseCode, 
+                        UseCode = parse_double(UseCode), 
                         NonTaxCode = NonTaxCode, 
                         AgPres = AgPres, 
                         Land_Value = LandValue,
@@ -68,11 +61,9 @@ parcel_select <- transmute(parcels_raw,
 
 parcels <- as_tibble(parcel_select)
 
-## seems clean 
-
 ```
-#### Convert  
-```{r conversion_ifnecessary}
+
+```{r check}
 
 ## skim through the data see if any significant issues  
 
@@ -85,7 +76,7 @@ skim(as.tibble(parcels[,1:5]))
 
 ```
 
-####write delim parcels file
+####Write delim parcels file
 ```{r write}
 
 #write.csv of parcels df 
@@ -98,24 +89,23 @@ write_delim(parcels, "parcels.csv", delim = "|")
 ## Analysis Questions
 
 ###1. 10 most-frequently-occuring land uses
-```{r 1}
+```{r Q1}
 
 ## 10 most frequ.occuring land uses 
 ## load in data
 
 UseCodes<-read_delim("UseCodes.csv", delim = "|", na = "No Description Available",
-                     col_types = cols_only(UseCode = "c", CodeDesc = "c"))
+                     col_types = cols_only(UseCode = "n", CodeDesc = "c"))
 
 ## warning identified missing value here:
 UseCodes[1430,]
 
 #---Join----
-if(!class(parcels$UseCode) == "character") as.character(parcels$UseCode)
-if(!class(UseCodes$UseCode) == "character") as.character(UseCodes$UseCode)
+# if(!class(parcels$UseCode) == "character") as.character(parcels$UseCode)
+# if(!class(UseCodes$UseCode) == "character") as.character(UseCodes$UseCode)
 
 class(parcels$UseCode)
 class(UseCodes$UseCode)
-
 
 # UseCodes$UseCode <- as.character(UseCodes$UseCode)
 # parcels$UseCode <- as.character(parcels$UseCode)
@@ -181,7 +171,8 @@ Sum_acres
 ```
 
 #### 3. Mean net assessed value per acre of the entire county 
-Assumption: Negative Net_av values are assumed to be valid (even the -1) 
+
+We negative Net_av values are assumed to be valid (even the -1) 
 ```{r mean_net_AV}
 
 ## Net mean assess value
@@ -189,10 +180,10 @@ Assumption: Negative Net_av values are assumed to be valid (even the -1)
 mean_Net_AV <- sum(as.numeric(parcels$Net_AV)/sum(parcels$Acreage))
 mean_Net_AV
 
-
 ```
 
 #### 4. what is the total net assessed value of all non-taxable parcels 
+
 We assume non-taxable parcels are indicated by non-NA values for NonTaxCode
 ```{r nontaxableparcels}
 
@@ -206,7 +197,8 @@ total_NetAV_nontaxable
 ```
 
 #### 5. 10 largest property holders, by acreage?
-  --> use mailing address of tax statements as a proxy for the parcel owner
+
+We assume use mailing address of tax statements as a proxy for the parcel owner
  
 ```{r top_prop_holders}
 
