@@ -1,8 +1,10 @@
 ---
-title: "ESM 232 - Assignment2"
+title: "ESM 232 - Assignment 2"
 author: "Margaux Sleckman"
 date: "May 15, 2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,9 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-####First, connect Rmd SQL chunk to SQLite database
 
-```{r library}
+
+###First, connect Rmd SQL chunk to SQLite database
+
+```{r library, results='hide', message=FALSE}
 
 library(DBI)
 library(tidyverse)
@@ -28,6 +32,9 @@ library("RSQLite")
 
 ```
 
+
+###Create database and lead data into it
+
 ```{r db_creation_load_data}
 
 ## create SQl database named parcels_db 
@@ -38,6 +45,7 @@ parcels_db
 ### Use Codes - same df as assignment 1
 UseCodes <- read_delim("UseCodes.csv", delim = "|", na = "No Description Available",
                      col_types = cols_only(UseCode = "n", CodeDesc = "c"))
+    ## Note: one cell is NA unknown. Will get a warning
 
 ### parcels - this dataframe was written before the analysis assignment 1 (column selection and coltype definition are est. in assignment 1) 
 
@@ -52,7 +60,9 @@ db_list_tables(parcels_db)
 
 ```
 
-####1. What are the 10 most-frequently-occuring land uses (in desc. order) 
+
+###1. What are the 10 most-frequently-occuring land uses (in desc. order)
+
 *Results in table below*
 ```{sql connection=parcels_db}
 
@@ -63,11 +73,14 @@ Group By parcels.UseCode
 ORDER BY Count DESC
 Limit 10;
 
+
 ```
 
-####2. How many acres are in agricultural preserves? 
+
+###2. How many acres are in agricultural preserves?
   To do this, we summed the acres for only agricultural preserve (AgPres) type land 
   We assume agri preserve is everything non-NA in agri preserve varaible
+  
 *single results in table below*
 
 ```{sql connection=parcels_db}
@@ -76,11 +89,14 @@ Select sum(parcels.Acreage) As "Total acreage"
 From parcels
 where parcels.AgPres IS NOT NULL;
 
+
 ```
 
-####3. What is the mean net assessed value per acre of the entire county?
+
+###3. What is the mean net assessed value per acre of the entire county?
 * Assuming the entire county is a single parcel, we take the sum net_AV and divide it by the sume of a acres in the county. 
 * We assume negative Net_AV values are assumed to be valid (even the -1) 
+
 *single results in table below*
 
 ```{sql connection = parcels_db}
@@ -88,9 +104,12 @@ where parcels.AgPres IS NOT NULL;
 Select (sum(parcels.Net_AV))/(sum(parcels.Acreage)) AS "Mean Net Assessed Value"
 FROM parcels;
 
+
 ```
 
-####4. What is the total net assessed value of all non-taxable parcels 
+
+###4. What is the total net assessed value of all non-taxable parcels
+
 *single result in table below*
 ```{sql connection=parcels_db}
 
@@ -101,9 +120,11 @@ where parcels.NonTaxCode IS NOT NULL;
 
 ```
 
-####5. Who are the 10 largest property holders, by acreage?
+
+###5. Who are the 10 largest property holders, by acreage?
 
 We assume use mailing address of tax statements as a proxy for the parcel owner
+
 *results in table*
 
 ```{sql connection = parcels_db}
@@ -121,7 +142,8 @@ Limit 10;
 Interestingly, the largest property owners by acreage in Santa Barbara county have a mailing address in SF.
 
 
-6. Who are the 10 largest property holders, by net assessed value? 
+###6. Who are the 10 largest property holders, by net assessed value?
+
 *results in table*
 
 ```{sql connection=parcels_db}
