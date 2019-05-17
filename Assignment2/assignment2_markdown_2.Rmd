@@ -1,5 +1,5 @@
 ---
-title: "Assignment2"
+title: "ESM 232 - Assignment2"
 author: "Margaux Sleckman"
 date: "May 15, 2019"
 output: html_document
@@ -11,9 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-connect Rmd SQL chunk to SQLite database
+####First, connect Rmd SQL chunk to SQLite database
 
-```{r }
+```{r library}
 
 library(DBI)
 library(tidyverse)
@@ -21,41 +21,39 @@ library(dplyr)
 if(!require(readr)) install.packages("readr")
 if(!require(skimr)) install.packages("skimr")
 library(stringr)
+library(dbplyr)
+
 
 library("RSQLite")
 
+```
+
+```{r db_creation_load_data}
+
+## create SQl database named parcels_db 
 parcels_db <- dbConnect(RSQLite::SQLite(), dbname = "parcels.db")
 parcels_db
 
-UseCodes<-read_delim("UseCodes.csv", delim = "|", na = "No Description Available",
+## Load data into R as df
+### Use Codes - same df as assignment 1
+UseCodes <- read_delim("UseCodes.csv", delim = "|", na = "No Description Available",
                      col_types = cols_only(UseCode = "n", CodeDesc = "c"))
+
+### parcels - this dataframe was written before the analysis assignment 1 (column selection and coltype definition are est. in assignment 1) 
 
 parcels <- read_delim("parcels.csv", delim = "|")
 
-```
-```{r copy_data_to_db}
-
-library(dbplyr)
-
+## Load data into parcels_db
 dbWriteTable(parcels_db, "parcels", parcels, row.names = T, overwrite = T)
 dbWriteTable(parcels_db, "UseCodes", UseCodes, row.names = T, overwrite = T)
 
+##verify that the two dfs are in parcels_db
 db_list_tables(parcels_db)
 
-
 ```
 
-
-```{sql connection=parcels_db}
-
-SELECT sql AS schema FROM sqlite_master
-```
-
-```{sql connection=parcels_db}
-
-SELECT APN, Home_address1, UseCode FROM parcels;
-```
-
+####1. What are the 10 most-frequently-occuring land uses (in desc. order) 
+*Results in table below*
 ```{sql connection=parcels_db}
 
 SELECT parcels.usecode, UseCodes.CodeDesc, count(parcels.UseCode) AS "Count"
@@ -67,9 +65,10 @@ Limit 10;
 
 ```
 
-#### 2. Acres for the whole agri. preserves 
-  We summed the acres for only agri. preserve type land 
+####2. How many acres are in agricultural preserves? 
+  To do this, we summed the acres for only agricultural preserve (AgPres) type land 
   We assume agri preserve is everything non-NA in agri preserve varaible
+*single results in table below*
 
 ```{sql connection=parcels_db}
 
@@ -77,28 +76,23 @@ Select sum(parcels.Acreage) As "Total acreage"
 From parcels
 where parcels.AgPres IS NOT NULL;
 
-
-
 ```
+
+####3. What is the mean net assessed value per acre of the entire county?
+* Assuming the entire county is a single parcel, we take the sum net_AV and divide it by the sume of a acres in the county. 
+* We assume negative Net_AV values are assumed to be valid (even the -1) 
+*single results in table below*
 
 ```{sql connection = parcels_db}
 
 Select (sum(parcels.Net_AV))/(sum(parcels.Acreage)) AS "Mean Net Assessed Value"
-FROM parcels
+FROM parcels;
 
 ```
 
+####4. What is the total net assessed value of all non-taxable parcels 
+*single result in table below*
 ```{sql connection=parcels_db}
-
-Select Top "10" parcels.UseCode 
-From parcels;
-
-```
-
-#### 4. what is the total net assessed value of all non-taxable parcels 
-
-```{sql connection=parcels_db}
-
 
 Select sum(parcels.Net_AV) As "Total Net_AV for Non-taxable" 
 From parcels
@@ -107,35 +101,42 @@ where parcels.NonTaxCode IS NOT NULL;
 
 ```
 
-#### 5. 10 largest property holders, by acreage?
+####5. Who are the 10 largest property holders, by acreage?
 
 We assume use mailing address of tax statements as a proxy for the parcel owner
+*results in table*
 
 ```{sql connection = parcels_db}
 
 
-SELECT parcels.Mail_Address1, parcels.Mail_Address2, Acreage, sum(parcels.Acreage) AS "PropertyAcreage"
+SELECT parcels.Mail_Address1, parcels.Mail_Address2,  sum(parcels.Acreage) AS "TotalPropertyAcreage"
 FROM parcels 
 Where parcels.Mail_Address1 IS NOT NULL AND parcels.Mail_Address2 IS NOT NULL AND parcels.Acreage IS NOT NULL
 Group By parcels.Mail_Address1, parcels.Mail_Address2
-ORDER BY PropertyAcreage DESC
+ORDER BY TotalPropertyAcreage DESC
 Limit 10;
 
-
 ```
+ 
+Interestingly, the largest property owners by acreage in Santa Barbara county have a mailing address in SF.
+
+
+6. Who are the 10 largest property holders, by net assessed value? 
+*results in table*
 
 ```{sql connection=parcels_db}
 
-SELECT parcels.Mail_Address1, parcels.Mail_Address2, parcels.Net_AV, sum(parcels.Net_AV) AS "PropertyNet_AV"
+SELECT parcels.Mail_Address1, parcels.Mail_Address2, sum(parcels.Net_AV) AS "PropertyNet_AV"
 FROM parcels 
 Where parcels.Mail_Address1 IS NOT NULL AND parcels.Mail_Address2 IS NOT NULL AND parcels.Net_AV IS NOT NULL
 Group By parcels.Mail_Address1, parcels.Mail_Address2
 ORDER BY PropertyNet_AV DESC
 Limit 10;
 
-
-
 ```
+
+Interestingly, the largest SB county property holder by net assessed value has a mailing address in Downtown SB.
+
 ```{r}
 
 dbDisconnect(parcels_db)
