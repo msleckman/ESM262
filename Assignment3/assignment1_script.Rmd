@@ -1,0 +1,142 @@
+---
+title: "ESM232-assignment3"
+author: "Margaux Sleckman"
+date: "May 17, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# what if we design new highways that have lower rolling coefficients 
+# We can reduce the rolling coefficient by 50%
+# Or we can reduce the mean speed to 80 km/h (still with 10% standard deviation)
+# Calculate mean power for both (assuming the same car probabilities above)
+# Which is better?
+
+```{r get_function}
+
+source("autopower.R")
+
+```
+
+
+```{r overall_setup}
+#3Crolling_less_50pc reps. is 50% of 0.015, the default value for crolling in the autopower() function
+crolling_less_50pc = 0.0075 
+
+##Conversion of km/hr to m/s - conversion factor = 0.277
+mean_speed = 100 * 0.277    #100km/hr to m/s
+mean_speed_low = 80 * 0.277 #80km/hr to ms
+
+## Samples form generation of random speeds following normal distribution
+nsample = 10000
+nsample_high = 100000
+
+## Generation of random speeds for raondom generation
+speeds = rnorm(mean = mean_speed, sd=0.1*mean_speed, n=nsample)
+speeds_2 = rnorm(mean = mean_speed_low, sd=0.1*mean_speed_low, n=nsample)
+
+
+## What does this look like?
+summary(speeds)
+
+```
+
+###1. What is the mean autopower generation (W) when we have a new rolling/friction coefficient: 
+```{r setup_for_1}
+
+##Create empty DF
+results_ms = data.frame(speed=speeds, power=NA)
+
+head(results_ms)
+
+##Generate 3 possible cars with respectvie area and mass
+possible_cars_ms = data.frame(mass=c(31000,45000,38000), area = c(25,30,22))
+possible_cars_ms$row = seq(from=1, to=nrow(possible_cars_ms))
+possible_cars_ms$prob = c(0.4, 0.4, 0.2)
+
+##Created a large random sample of the three cars   
+whichcar = base::sample(possible_cars_ms$row,
+                        size=nsample,
+                        prob=possible_cars_ms$prob,
+                        replace=TRUE)
+
+head(whichcar)
+
+
+## Populate results_ms DF with the different masses and areas of the three cars.
+results_ms$mass = possible_cars_ms$mass[whichcar]
+results_ms$area = possible_cars_ms$area[whichcar]
+  ## again, there are only 3 unique options for mass and area
+
+head(results_ms)
+
+```
+
+```{r run_autopower_w_new_crolling}
+
+
+##Run autopower()with the lower crolling value
+pb_new_crolling <- autopower(V=results_ms$speed, m = results_ms$mass, A = results_ms$area, crolling = crolling_less_50pc)
+
+head(pb_new_crolling, 50)
+
+##mean power generation with lower crolling (W)
+mean(pb_new_crolling)
+
+##OLD##
+# pb_new_crolling <- sapply(crolling_less_50pc, 
+#                autopower,
+#         A=results_ms$area, 
+#        V=results_ms$speed, 
+#        m = results_ms$mass)
+
+```
+
+###2. What is the mean autopower generation (W) when the speed limit is reduced to 80 km/h 
+```{r set_up_for2}
+
+# summary(speeds_2)
+
+## Create Empty for cars
+results_ms_2 = data.frame(speed=speeds_2, power=NA)
+
+head(results_ms_2)
+
+results_ms_2$mass = possible_cars_ms$mass[whichcar]
+results_ms_2$area = possible_cars_ms$area[whichcar]
+
+head(results_ms_2)
+
+# ##Conducting exactly as above (understandably redundant)
+# possible_cars_ms = data.frame(mass=c(31000,45000,38000), area = c(25,30,22))
+# possible_cars_ms$row = seq(from=1, to=nrow(possible_cars_ms))
+# possible_cars_ms$prob = c(0.4, 0.4, 0.2)
+# # possible_cars_ms$power = autopower(V=speed_base, A = possible_cars$area, m=possible_cars$area)
+# 
+# whichcar = base::sample(possible_cars_ms$row,
+#                         size=nsample,
+#                         prob=possible_cars_ms$prob,
+#                         replace=TRUE)
+
+# what is whichcar?
+
+```
+
+```{r run_autopower_w_new_speeds}
+
+##Run autopower() with new speeds:
+pb_new_mean_speeds <- autopower(A=results_ms_2$area, V=results_ms_2$speed, m = results_ms_2$mass)
+
+head(pb_new_mean_speeds, 50)
+
+##mean power generation with lower speed 
+mean(pb_new_mean_speeds) # (W)
+
+```
+
+Option B appears to be a better option based on the above calculations because the energy output from a new rolling coefficient is higher (187,000 W) compard to the power required to move a vehicle at an 0 km/hr speed limit (~177,000 W).
+
+In other words, a policy that reduced the speed limit to 80 km/hr will cause a greater drop in energy output compared to a policy that reduces the degree of friction onthe highway.
