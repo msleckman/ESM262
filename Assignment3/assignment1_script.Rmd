@@ -9,11 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# what if we design new highways that have lower rolling coefficients 
-# We can reduce the rolling coefficient by 50%
-# Or we can reduce the mean speed to 80 km/h (still with 10% standard deviation)
-# Calculate mean power for both (assuming the same car probabilities above)
-# Which is better?
+What if we design new highways that have lower rolling coefficients. We can reduce the rolling coefficient by 50%
+Or we can reduce the mean speed to 80 km/h (still with 10% standard deviation)
+Calculate mean power for both (assuming the same car probabilities above)
+Which is better?
 
 ```{r get_function}
 
@@ -35,6 +34,7 @@ nsample = 10000
 nsample_high = 100000
 
 ## Generation of random speeds for raondom generation
+set.seed(25)
 speeds = rnorm(mean = mean_speed, sd=0.1*mean_speed, n=nsample)
 speeds_2 = rnorm(mean = mean_speed_low, sd=0.1*mean_speed_low, n=nsample)
 
@@ -137,6 +137,6 @@ mean(pb_new_mean_speeds) # (W)
 
 ```
 
-Option B appears to be a better option based on the above calculations because the energy output from a new rolling coefficient is higher (187,000 W) compard to the power required to move a vehicle at an 0 km/hr speed limit (~177,000 W).
+Option B appears to be a better option based on the above calculations because the energy output from a new rolling coefficient is higher (~181,000 W) compared to the power required to move a vehicle at an 80 km/hr speed limit (~177,000 W).
 
-In other words, a policy that reduced the speed limit to 80 km/hr will cause a greater drop in energy output compared to a policy that reduces the degree of friction onthe highway.
+In other words, a policy that reduced the speed limit to 80 km/hr - from 100km/hr originally - will cause a greater drop in energy produced compared to a policy that reduces the degree of friction on the highway surface.
