@@ -113,13 +113,12 @@ if(graph == T){
    }
  else {
  
-   return(list(max_fish_type, revenue, total_fisheries_revenue))
+   return(list(max_frequency, revenue, total_fisheries_revenue))
  
    }
 
 }
 
-
 fish_summary(fish_count_df = nfish_df, fish_cost_df = fish_cost_df, graph = T)
-revenue
+fish_summary(fish_count_df = nfish_df, fish_cost_df = fish_cost_df, graph = F)
 
