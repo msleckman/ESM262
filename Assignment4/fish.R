@@ -32,48 +32,57 @@ library(reshape2)
 library(tidyverse)
 
 
+site_D_frequ <- nfish_df %>%
+  select(fish_type, site_D_count) %>% 
+  filter(site_D_count == max(site_D_count)) %>% 
+  melt(id.vars = "fish_type")
+
+site_D_frequ
+
 fish_frequ <- data.frame(Site, fish_type, count)   
 
 
-# colnames(revenue_by_fish) <- c("fish", "Site", "Count")
-
-###
-# fish_cost_df
-
-# nfish_df
-
 fish_summary <- function(fish_count_df, fish_cost_df, graph = F){
   
-# if(fish_count_df[,1] != fish_cost_df[,1]){
-# 
-#   warning("fish types are not equal")
-# 
-# }
-# ## Verify that fish_type column for fish_count_df and fish_cost_df are same
-# 
-# if (fish_count_df[,1] == fish_cost_df[,1]){
-# 
-# sort(as.character(fish_count_df[,1]), decreasing = F)
-# sort(as.character(fish_cost_df[,1]), decreasing = F)
-# 
-# }
+if(fish_count_df[,1] != fish_cost_df[,1]){
+
+  warning("fish types are not same")
+
+}
+## Verify that fish_type column for fish_count_df and fish_cost_df are same
+
+if (fish_count_df[,1] == fish_cost_df[,1]){
+
+sort(as.character(fish_count_df[,1]), decreasing = F)
+sort(as.character(fish_cost_df[,1]), decreasing = F)
+
+}
 
 ### separate by location
   site_A_frequ <- fish_count_df %>%
     select(fish_type, site_A_count) %>% 
-    filter(site_A_count == max(site_A_count))
+    filter(site_A_count == max(site_A_count)) %>% 
+    melt(id.vars = "fish_type")
   site_B_frequ <- fish_count_df %>%
     select(fish_type, site_B_count) %>% 
-    filter(site_B_count == max(site_B_count))
+    filter(site_B_count == max(site_B_count)) %>% 
+    melt(id.vars = "fish_type")
   site_C_frequ <- fish_count_df %>%
     select(fish_type, site_C_count) %>% 
-    filter(site_C_count == max(site_C_count))
+    filter(site_C_count == max(site_C_count)) %>% 
+    melt(id.vars = "fish_type")
   site_D_frequ <- fish_count_df %>%
     select(fish_type, site_D_count) %>% 
-    filter(site_D_count == max(site_D_count))
-  
-max_frequency<-list(site_A_frequ, site_B_frequ, site_C_frequ, site_D_frequ)
-  
+    filter(site_D_count == max(site_D_count)) %>% 
+    melt(id.vars = "fish_type")
+    
+max_frequency <- rbind(site_A_frequ, site_B_frequ, site_C_frequ, site_D_frequ) 
+colnames(max_frequency) <- c("fish_type", "site_id", "frequency")
+
+##output
+max_frequency_output <- list("Most frequently caught fish per site", max_frequency[c("site_id", "fish_type", "frequency")])  
+
+
 ### total revenue for each location
 
 revenue_by_fish = data.frame(fish = fish_count_df$fish_type,
@@ -87,9 +96,13 @@ revenue_by_fish = melt(revenue_by_fish, id = "fish")
 
 colnames(revenue_by_fish) <- c("fish", "Site", "Count")
 
+
 revenue <- revenue_by_fish %>% 
   group_by(Site) %>% 
   summarise(total_revenue = sum(Count))
+
+##output
+revenue_output <- list("Total fisheries revenue per site", as.data.frame(revenue))
 
 ### Total fish revenue sum 
 
@@ -101,19 +114,22 @@ revenue_graph <- as.data.frame(revenue)
 
 final_graph <- ggplot(revenue_graph, aes(x=Site, y=total_revenue))+
   geom_bar(stat = "identity", col = "blue", fill= "lightblue")+
+  annotate(geom="label", x=3.5, y=12000, label= paste0("Total fisheries revenue\n", "$", total_fisheries_revenue),
+           color="black", fill = "grey")+
   theme_classic()+
-  ylab("Total Revenue")+
-  xlab("Site")
+  ylab("Total Revenue ($)")+
+  xlab("Site")+
+  labs(title = "Total Revenue by Fishing Location\n")
 
 
 if(graph == T){
 
-  return(list(max_frequency, revenue, total_fisheries_revenue, final_graph))
+  return(list(max_frequency_output, revenue_output, paste0("Total Fisheries Revenue = ", total_fisheries_revenue), final_graph))
 
    }
  else {
  
-   return(list(max_frequency, revenue, total_fisheries_revenue))
+   return(list(max_frequency, revenue_output, paste0("Total Fisheries Revenue = ", total_fisheries_revenue)))
  
    }
 
