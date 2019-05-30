@@ -1,0 +1,68 @@
+---
+title: "ESM 232 - assignment4_functions"
+author: "Margaux Sleckman"
+date: "May 24, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+####Packages
+```{r library}
+
+library(tidyverse)
+library(reshape2)
+
+```
+
+####Function call
+```{r source}
+
+source("fish.R")
+
+```
+
+####Set up tables
+```{r tables}
+
+fish_type <- c("cod", "salmon", "tuna",
+               "trout", "halibut", 
+               "macherel", "sardines")
+
+fish_price <- c(10, 15, 12, 8, 17, 7, 3)
+
+site_A_count = c(100, 130, 200, 56, 89, 240, 310)
+site_B_count = c(45, 211, 330, 43, 91, 252, 349)
+site_C_count = c(80, 120, 253, 21, 87, 235, 413)
+site_D_count = c(143, 90, 146, 60, 101, 210, 291)
+
+
+fish_cost_df <- data.frame(fish_type, fish_price)
+
+nfish_df <- data.frame(fish_type, site_A_count,
+                       site_B_count, site_C_count,
+                       site_D_count)
+
+##table 1: price per unit fish 
+fish_cost_df
+##table 2: fish count per location
+nfish_df
+
+```
+
+####Output
+```{r function}
+
+
+output_w_graph <- fish_summary(fish_count_df = nfish_df, fish_cost_df = fish_cost_df, graph = T)
+
+output_wo_graph <- fish_summary(fish_count_df = nfish_df, fish_cost_df = fish_cost_df, graph = F)
+
+output_w_graph
+output_wo_graph
+
+
+```
+
