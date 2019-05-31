@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ####Packages
-```{r library}
+```{r library, results='hide', message=FALSE}
 
 library(tidyverse)
 library(reshape2)
@@ -24,7 +24,7 @@ source("fish.R")
 
 ```
 
-####Set up tables
+####Set up tables for function test
 ```{r tables}
 
 fish_type <- c("cod", "salmon", "tuna",
@@ -60,9 +60,35 @@ output_w_graph <- fish_summary(fish_count_df = nfish_df, fish_cost_df = fish_cos
 
 output_wo_graph <- fish_summary(fish_count_df = nfish_df, fish_cost_df = fish_cost_df, graph = F)
 
-output_w_graph
-output_wo_graph
-
 
 ```
 
+####Output with graph
+```{r withgraph}
+
+output_w_graph
+
+```
+
+#####Brief summary of results
+
+The output of the functions shows the following:
+
+1. At all sites, the sardines were the most frequently caught fish. The highest catch number is found at site C. We may hypothesize that sardines top the catch numbers for each site because they are a smaller and more numerous fish species. 
+
+2. Site A sees a total revenue of $9921 for its catches, Site B generated $12,227 in revenue, Site C generated $10,167 in revenue, and Site D generated $9072, the lowest amount among sites considered.
+These revenue results are also shown on the graphical output.
+
+3. The total revenue for all sites totals $41,437.
+
+
+###Output without graph
+```{r}
+
+ output_wo_graph
+
+```
+
+We see that the output here is the exactly same as above, but the graphical option is set to false. In other words, we do not get a graph as part of the output with this test of the function. 
+
+With more time, the fish.R function should be expanded such that it can accept different types of data (e.g. matrix), or more data.
